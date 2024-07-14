@@ -1,5 +1,6 @@
 import turtle
 import math
+import save
 from config import *
 
 ui = turtle.Turtle()
@@ -645,7 +646,16 @@ def draw_ui(brush):
     ui.left(90)
 
     save = SaveButton()
+    load = LoadButton()
     save.paint_button(ui)
+
+    ui.penup()
+    ui.backward(83)
+    ui.right(90)
+    ui.forward(36)
+    ui.left(90)
+
+    load.paint_button(ui)
 
     brush.screen.update()
 
@@ -707,6 +717,15 @@ def on_click(x, y, screen, t, brush):
     elif (screen.window_width() // 2 - 44) < x < (screen.window_width() // 2 - 15) and (screen.window_height() // 2 - 35) < y < (screen.window_height() - 6):
         print("Closing Turtle Paint...")
         screen.bye()
+    
+    # handle save/load buttons
+    elif (-screen.window_width() // 2 + 11) < x < (-screen.window_width() // 2 + 95) and (screen.window_height() // 2 - 853) < y < (screen.window_height() // 2 - 781):
+        # save
+        if (screen.window_height() // 2 - 817) < y < (screen.window_height() // 2 - 778):
+            save.save_canvas(brush)
+        # load
+        elif (screen.window_height() // 2 - 862) < y < (screen.window_height() // 2 - 817):
+            save.load_canvas(brush)
 
 # handles sliders
 def cursor_down(x, y):

@@ -31,6 +31,10 @@ class ToolList(Enum):
                 return EraserTool()
             case ToolList.LINE:
                 return LineTool()
+            case ToolList.RECTANGLE:
+                return RectangleTool()
+            case ToolList.CIRCLE:
+                return CircleTool()
 
 class Brush():
     width = 3
@@ -39,8 +43,12 @@ class Brush():
 
     screen = None
     t = None
+    loading = None
 
     draw_data = [[(0, 0), 0, 0]]
+
+    # used for undo
+    buffer = []
 
     # out of bounds check
     def oob(self, x, y):

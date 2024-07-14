@@ -51,69 +51,16 @@ def follow_mouse(event):
         brush.tool.follow_mouse(x, y, brush)
 
         dragging = False
+    
+def undo(event):
+    global brush, t, screen
 
+    if len(brush.buffer) > 0:
+        for x in range(brush.buffer[-1] + brush.tool.get_buffer()):
+            t.undo()
+        brush.buffer.pop()
 
-def clear_canvas():
-    global brush
-    t.clear()
-    loading.clear()
-    if len(brush.draw_data) >= 1:
-        brush.draw_data = [[(0, 0), 0, 0]]
-
-
-def save_canvas():
-    global brush
-    # TODO: tell the user it has saved
-
-    print("saving...")
-    print(brush.draw_data)
-
-    with open("drawings/drawing.txt", "wb") as file:
-        for i in range(0, len(brush.draw_data) - 1):
-            try:
-                if brush.draw_data[i][0] == brush.draw_data[i + 1][0]:
-                    brush.draw_data.pop(i)
-            except IndexError:
-                break
-        pickle.dump(brush.draw_data, file)
-    time.sleep(1)
-    print("saved")
-
-
-def load_canvas():
-    print("loading...")
-    clear_canvas()
-    if os.path.isfile("drawings/drawing.txt"):
-        global loading, brush, screen
-        with open("drawings/drawing.txt", "rb") as file:
-            file_data = pickle.load(file)
-            loading.penup()
-            loading.goto(file_data[0][0])
-            loading.pencolor(colors[file_data[0][1]])
-            loading.width(file_data[0][2])
-            file_data.pop(0)
-
-            loading.speed('fastest')
-
-            for data in file_data:
-                if data[2] == 0:
-                    loading.penup()
-                loading.goto(data[0])
-                if data[2] != 0:
-                    loading.pendown()
-                loading.pencolor(colors[data[1]])
-                loading.width(data[2])
-
-            screen.update()
-
-            brush.draw_data = file_data
-    else:
-        print("File not found")
-    print("loaded")
-    loading.hideturtle()
-
-    ui.draw_ui(brush)
-
+        screen.update()
 
 screen = turtle.Screen()
 screen.setup(1300, 900)
@@ -132,6 +79,8 @@ loading.hideturtle()
 loading.width(3)
 t.width(3)
 
+brush.loading = loading
+
 t.shapesize(0.25, 0.25)
 t.penup()
 t.shape("circle")
@@ -140,14 +89,12 @@ canvas.bind("<Motion>", follow_mouse)
 canvas.bind("<ButtonRelease-1>", brush_up)
 canvas.bind("<Configure>", lambda event : ui.draw_ui(brush))
 
+turtle.listen()
+turtle.onkey(lambda : undo(0), "z")
+
 # on click, put brush down
 # opposite on release
 turtle.onscreenclick(brush_down)
-
-turtle.listen()
-turtle.onkey(save_canvas, "s")
-turtle.onkey(load_canvas, "l")
-turtle.onkey(clear_canvas, "c")
 
 t.speed(-1)
 
