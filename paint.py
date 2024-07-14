@@ -1,10 +1,8 @@
 import turtle
 import os
-import pickle
-import time
-
+from tkinter import Canvas, Event
+from brush import Brush
 import ui
-from config import *
 
 __dirname = os.path.dirname(__file__)
 drawings_dir_path = os.path.join(__dirname, 'drawings')
@@ -15,22 +13,22 @@ except OSError as error:
     pass
 
 # all the info about the program
-brush = Brush()
+brush: Brush = Brush()
 
 # whether the turtle is currently loading
-loading = False
+loading: bool = False
 
-dragging = False
+dragging: bool = False
 
 
-def brush_down(x, y):
+def brush_down(x: float, y: float):
     global brush
 
-    ui.on_click(x, y, screen, t, brush)
+    ui.on_click(x, y, brush)
 
     brush.tool.cursor_down(x, y, brush)
 
-def brush_up(event):
+def brush_up(event: Event):
     global brush
 
     x, y = canvas.canvasx(event.x), -canvas.canvasy(event.y)
@@ -39,7 +37,7 @@ def brush_up(event):
 
     brush.tool.cursor_up(x, y, brush)
 
-def follow_mouse(event):
+def follow_mouse(event: Event):
     global brush, dragging
 
     if not dragging:
@@ -52,7 +50,7 @@ def follow_mouse(event):
 
         dragging = False
     
-def undo(event):
+def undo(event: Event):
     global brush, t, screen
 
     if len(brush.buffer) > 0:
@@ -64,36 +62,37 @@ def undo(event):
 
         screen.update()
 
-screen = turtle.Screen()
+screen: turtle._Screen = turtle.Screen()
 screen.setup(1300, 900)
 screen.tracer(0)
 
 brush.screen = screen
 
-canvas = screen.getcanvas()
-t = turtle.Turtle()
-loading = turtle.Turtle()
+canvas: Canvas = screen.getcanvas()
+t: turtle.Turtle = turtle.Turtle()
+#loading: turtle.Turtle = turtle.Turtle()
 
 brush.t = t
 
-loading.hideturtle()
-
-loading.width(3)
 t.width(3)
 t.setundobuffer(10000)
 
-brush.loading = loading
+brush.loading = turtle.Turtle()
+brush.loading.hideturtle()
 
 t.shapesize(0.25, 0.25)
 t.penup()
 t.shape("circle")
 
+# when mouse clicks
 canvas.bind("<Motion>", follow_mouse)
+# on mouse click
 canvas.bind("<ButtonRelease-1>", brush_up)
+# resize ui on window resize
 canvas.bind("<Configure>", lambda event : ui.draw_ui(brush))
+canvas.bind("<Control-KeyPress-z>", undo)
 
-turtle.listen()
-turtle.onkey(lambda : undo(0), "z")
+screen.listen()
 
 # on click, put brush down
 # opposite on release

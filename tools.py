@@ -1,94 +1,54 @@
-import config
+from typing import Any
+from colors import colors
 import turtle
 import math
 from abc import abstractmethod, abstractstaticmethod
+from enum import Enum
 
+# we cant type brush as Brush because of circular imports
 class Tool():
     @abstractmethod
-    def cursor_down(self, x, y, brush):
-        """
-        Runs when the left mouse button is clicked. 
-
-        Keyword arguments:
-        self -- the tool
-        x -- the x position of the mouse click
-        y -- the y position of the mouse click
-        brush -- the brush object
-        """
-        return NotImplementedError
+    def cursor_down(self, x: float, y: float, brush: Any):
+        """Runs when the left mouse button is clicked. """
+        raise NotImplementedError
 
     @abstractmethod
-    def cursor_up(self, x, y, brush):
-        """
-        Runs when the left mouse button is released.
-
-        Keyword arguments:
-        self -- the tool
-        x -- the x position of the mouse click
-        y -- the y position of the mouse click
-        brush -- the brush object
-        """
-        return NotImplementedError
+    def cursor_up(self, x: float, y: float, brush: Any):
+        """Runs when the left mouse button is released."""
+        raise NotImplementedError
 
     @abstractmethod
-    def follow_mouse(self, x, y, brush):
-        """
-        Called when the mouse moves. 
+    def follow_mouse(self, x: float, y: float, brush: Any):
+        """Called when the mouse moves. """
+        raise NotImplementedError
 
-        Keyword arguments:
-        self -- the tool
-        x -- the x position of the mouse click
-        y -- the y position of the mouse click
-        brush -- the brush object
-        """
-        return NotImplementedError
+    @abstractstaticmethod
+    def get_index() -> int:
+        """Return the index of the tool in the list. Used for drawing the ui."""
+        raise NotImplementedError
 
     @abstractmethod
-    def get_index():
-        """
-        Return the index of the tool in the list
-
-        Keyword arguments:
-        self -- the tool
-        
-        Returns:
-        the index of the tool (int)
-        """
-        return NotImplementedError
-
-    @abstractmethod
-    def get_buffer(self):
-        """
-        Return the undo buffer for the tool
-        
-        Keyword arguments:
-        self -- the tool
-        
-        Returns:
-        the undo buffer (int)
-        """
+    def get_buffer(self) -> int:
+        """Return the undo buffer for the tool"""
+        raise NotImplementedError
     
     def reset_buffer(self):
-        """
-        Reset the move buffer
-        
-        Keyword arguments:
-        self -- the tool
-        """
+        """Reset the move buffer"""
+        # use pass because it's not necessary for every tool
         pass
 
 class PencilTool(Tool):
     # is the turtle pen down
-    pen_down = False
+    pen_down: bool = False
     # is the left mouse button down
-    mouse_down = False
+    mouse_down: bool = False
 
     # used to check if the cursor hasnt moved for dots
-    click_pos = (0, 0)
+    click_pos: tuple[float, float] = (0., 0.)
 
     # used for undo
-    buffer = 0
-    move_buffer = 0
+    buffer: int = 0
+    move_buffer: int = 0
 
     def cursor_down(self, x, y, brush):
         if not brush.oob(x, y):
@@ -154,18 +114,19 @@ class PencilTool(Tool):
 
 class EraserTool(Tool):
     # is the turtle pen down
-    pen_down = False
+    pen_down: bool = False
     # is the left mouse button down
-    mouse_down = False
+    mouse_down: bool = False
 
     # used to check if the cursor hasnt moved for dots
-    click_pos = (0, 0)
+    click_pos: tuple[float, float] = (0., 0.)
 
     # used for undo
-    buffer = 0
-    move_buffer = 0
+    buffer: int = 0
+    move_buffer: int = 0
 
     def cursor_down(self, x, y, brush):
+        print(x)
         brush.t.pencolor("white")
         brush.t.width(brush.width * 2)
 
@@ -188,7 +149,7 @@ class EraserTool(Tool):
         if (x, y) == self.click_pos:
             brush.t.dot(size = brush.width * 2 - 1)
         
-        brush.t.pencolor(config.colors[brush.color])
+        brush.t.pencolor(colors[brush.color])
     
     def follow_mouse(self, x, y, brush):
         if not self.pen_down and brush.draw_data[-1][2] == 0:
@@ -215,14 +176,14 @@ class EraserTool(Tool):
     
 class LineTool(Tool):
     # where the line is first clicked
-    click_pos = (0, 0)
+    click_pos: tuple[float, float] = (0., 0.)
 
-    dragging = False
+    dragging: bool = False
 
-    preview = None
+    preview: turtle.Turtle
 
     # used for undo
-    buffer = 0
+    buffer: int = 0
 
     def __init__(self):
         self.preview = turtle.Turtle()
@@ -281,11 +242,11 @@ class LineTool(Tool):
         return 2
 
 class RectangleTool(Tool):
-    click_pos = (0, 0)
+    click_pos: tuple[float, float] = (0., 0.)
 
-    dragging = False
+    dragging: bool = False
 
-    preview = None
+    preview: turtle.Turtle
 
     def __init__(self):
         self.preview = turtle.Turtle()
@@ -368,11 +329,11 @@ class RectangleTool(Tool):
 
 
 class CircleTool(Tool):
-    click_pos = (0, 0)
+    click_pos: tuple[float, float] = (0., 0.)
 
-    dragging = False
+    dragging: bool = False
 
-    preview = None
+    preview: turtle.Turtle
 
     def __init__(self):
         self.preview = turtle.Turtle()
@@ -442,3 +403,26 @@ def push_undo(value, brush):
     if sum(brush.buffer) + value > 10000:
         brush.buffer.pop(0)
     brush.buffer.append(value)
+
+class ToolList(Enum):
+    PENCIL = 0
+    ERASER = 1
+    LINE = 2
+    RECTANGLE = 3
+    CIRCLE = 4
+    TEST = 5
+
+    def get_tool(self):
+        match self:
+            case ToolList.PENCIL:
+                return PencilTool()
+            case ToolList.ERASER:
+                return EraserTool()
+            case ToolList.LINE:
+                return LineTool()
+            case ToolList.RECTANGLE:
+                return RectangleTool()
+            case ToolList.CIRCLE:
+                return CircleTool()
+            case _:
+                return PencilTool()
